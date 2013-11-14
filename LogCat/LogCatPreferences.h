@@ -8,10 +8,17 @@
 
 #import "DBPrefsWindowController.h"
 
-@interface LogCatPreferences : DBPrefsWindowController {
+@interface LogCatPreferences : DBPrefsWindowController <NSComboBoxDelegate, NSComboBoxDataSource> {
+    IBOutlet NSView *adbView;
     IBOutlet NSView *appearanceView;
     IBOutlet NSView *aboutView;
+    IBOutlet NSComboBox *adbList;
+    
+    NSMutableArray                   *adbLocations;
+    bool    *consumeFirstCombo;
 }
 - (IBAction)fontChanged:(id)sender;
+
+
 
 @end

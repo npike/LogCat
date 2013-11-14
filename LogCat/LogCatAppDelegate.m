@@ -72,6 +72,7 @@
 
 - (void)readSettings
 {
+    NSLog(@"readSettings");
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     NSColor* v = [NSUnarchiver unarchiveObjectWithData:[defaults objectForKey:@"logVerboseColor"]];
     NSColor* d = [NSUnarchiver unarchiveObjectWithData:[defaults objectForKey:@"logDebugColor"]];
@@ -103,6 +104,11 @@
         [filterListTable reloadData];
     }
     [self sortFilters];
+    
+    
+    adbCustomLocation =[defaults stringForKey:@"adbLocationCustom"];
+    adbLocationMode = [defaults integerForKey:@"adbLocationMode"];
+     
 }
 
 - (void) resetConnectButton {
@@ -128,6 +134,8 @@
 {
     [logDataTable setMenuDelegate:self];
     [filterListTable setMenuDelegate:self];
+    [logDataTable setTarget:self];
+    [logDataTable setDoubleAction:@selector(logRowDoubleClick:)];
     
     pidMap = [NSMutableDictionary dictionary];
     [self registerDefaults];
@@ -220,10 +228,12 @@
 
 - (void)startAdb
 {
+    NSLog(@"startAdb");
     [self.window makeKeyAndOrderFront:self];
+    isRunning = YES;
     NSThread* thread = [[NSThread alloc] initWithTarget:self selector:@selector(readLog:) object:nil];
     [thread start];
-    isRunning = YES;
+    
     [self resetConnectButton];
 }
 
@@ -231,6 +241,13 @@
 {
     [self readSettings];
     [self.logDataTable reloadData];
+}
+
+- (void)adbSettingsChanged
+{
+    NSLog(@"adbSettingsChanged");
+    [self readSettings];
+    [self restartAdb];
 }
 
 - (void)myBoundsChangeNotificationHandler:(NSNotification *)aNotification
@@ -257,6 +274,7 @@
 
 - (void)readLog:(id)param
 {
+    NSLog(@"readLog");
     NSArray *arguments = [NSArray arrayWithObjects: @"logcat", @"-v", @"long", nil];
     
     NSTask *task = [self adbTask:arguments];
@@ -298,6 +316,10 @@
     task = [[NSTask alloc] init];
     NSBundle *mainBundle=[NSBundle mainBundle];
     NSString *path=[mainBundle pathForResource:@"adb" ofType:nil];
+    if (adbLocationMode > 0) {
+        NSLog(@"Using custom ADB location %@", adbCustomLocation);
+        path=adbCustomLocation;
+    }
     
     [task setLaunchPath:path];
     [task setArguments: arguments];
@@ -596,6 +618,8 @@
     [NSApp beginSheet:sheetAddFilter modalForWindow:self.window modalDelegate:self didEndSelector:@selector(didEndSheet:returnCode:contextInfo:) contextInfo:nil];
 }
 
+
+
 - (IBAction)removeFilter
 {
     [filters removeObjectAtIndex:[[filterListTable selectedRowIndexes] firstIndex] - 1];
@@ -617,6 +641,12 @@
     [NSApp endSheet:sheetAddFilter returnCode:NSCancelButton];
 }
 
+- (IBAction)cancelBigLogSheet:(id)sender
+{
+    NSLog(@"should cancel biglogsheet");
+    [NSApp endSheet:sheetBigLog returnCode:NSCancelButton];
+}
+
 - (IBAction)acceptSheet:(id)sender
 {
     [NSApp endSheet:sheetAddFilter returnCode:NSOKButton];
@@ -634,13 +664,12 @@
 
 - (IBAction)restartAdb:(id)sender
 {
-    if (isRunning) {
-        isRunning = NO;
-    } else {
-        [pidMap removeAllObjects];
-        [self clearLog];
-        [self startAdb];
-    }
+    NSLog(@"restartAdb");
+    isRunning = NO;
+    [pidMap removeAllObjects];
+    [self clearLog];
+    [self startAdb];
+    
 }
 
 - (void)clearLog
@@ -683,10 +712,33 @@
     
 }
 
+- (IBAction)logRowDoubleClick:(id)sender {
+     NSInteger rowNumber = [logDataTable clickedRow];
+    NSLog(@"Clicked %d", rowNumber);
+    
+    if (sheetBigLog == nil) {
+        [NSBundle loadNibNamed:@"BigLogSheet" owner:self];
+    }
+    
+    
+    
+    [tfBigLog becomeFirstResponder];
+    [tfBigLog setStringValue:[[logcat objectAtIndex:rowNumber] objectForKey:@"text"]];
+    
+    [[sheetBigLog logEntry] setStringValue:@"asdasd"];
+    
+    [NSApp beginSheet:sheetBigLog modalForWindow:self.window modalDelegate:self didEndSelector:@selector(didEndSheet:returnCode:contextInfo:) contextInfo:nil];
+
+}
+
 - (void)didEndSheet:(NSWindow *)sheet returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo
 {
     NSLog(@"didEndSheet: %ld", returnCode);
 
+    if (sheet == sheetBigLog) {
+        [sheetBigLog orderOut:self];
+        return;
+    }
     [sheetAddFilter orderOut:self];
     if (returnCode == NSCancelButton) {
         return;

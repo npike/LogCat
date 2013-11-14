@@ -132,6 +132,7 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    NSLog(@"applicationDidFinishLaunching");
     [logDataTable setMenuDelegate:self];
     [filterListTable setMenuDelegate:self];
     [logDataTable setTarget:self];
@@ -155,11 +156,16 @@
     
     [filterListTable selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
     
+    [self initViewHeaderMenu: logDataTable];
+    
     id clipView = [[self.logDataTable enclosingScrollView] contentView];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(myBoundsChangeNotificationHandler:)
                                                  name:NSViewBoundsDidChangeNotification
                                                object:clipView];
+    
+    
+    
 }
 
 - (void) loadPID {
@@ -866,6 +872,39 @@
     NSLog(@"Copy Selected Rows");
     [self copySelectedRow: NO: NO];
 }
+
+
+- (void)initViewHeaderMenu:(id)view {
+    NSLog(@"initViewHeaderMenu");
+    //create our contextual menu
+    NSMenu *menu = [[logDataTable headerView] menu];
+    //loop through columns, creating a menu item for each
+    for (NSTableColumn *col in [view tableColumns]) {
+        NSLog(@"adding %@ to menu", [col.headerCell stringValue]);
+        if ([[col identifier] isEqualToString:@"text"])
+            continue;   // Cannot hide name column
+        NSMenuItem *mi = [[NSMenuItem alloc] initWithTitle:[col.headerCell stringValue]
+                                                    action:@selector(toggleColumn:)  keyEquivalent:@""];
+        mi.target = self;
+        mi.representedObject = col;
+        [menu addItem:mi];
+    }
+    return;
+}
+
+- (void)toggleColumn:(id)sender {
+    NSTableColumn *col = [sender representedObject];
+    [col setHidden:![col isHidden]];
+}
+
+#pragma mark NSMenu Delegate Methods
+-(void)menuWillOpen:(NSMenu *)menu {
+    for (NSMenuItem *mi in menu.itemArray) {
+        NSTableColumn *col = [mi representedObject];
+        [mi setState:col.isHidden ? NSOffState : NSOnState];
+    }
+}
+
 
 - (void) copySelectedRow: (BOOL) escapeSpecialChars :(BOOL) messageOnly{
     

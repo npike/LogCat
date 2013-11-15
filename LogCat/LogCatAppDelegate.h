@@ -40,7 +40,7 @@
     IBOutlet NSPopUpButton *puFilterField;
     IBOutlet NSTextField *tfFilterText;
     IBOutlet NSSegmentedControl *filterToolbar;
-    IBOutlet NSTextField *tfBigLog;
+    IBOutlet NSTextView *tfBigLog;
 
     
     NSDictionary* colors;

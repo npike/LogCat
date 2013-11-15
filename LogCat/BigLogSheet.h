@@ -12,6 +12,6 @@
     
 }
 
-@property (weak) IBOutlet NSTextField *logEntry;
+@property IBOutlet NSTextView *logEntry;
 
 @end

@@ -719,8 +719,8 @@
 }
 
 - (IBAction)logRowDoubleClick:(id)sender {
-     NSInteger rowNumber = [logDataTable clickedRow];
-    NSLog(@"Clicked %d", rowNumber);
+    NSInteger rowNumber = [logDataTable clickedRow];
+    //NSLog(@"Clicked %d", rowNumber);
     
     if (sheetBigLog == nil) {
         [NSBundle loadNibNamed:@"BigLogSheet" owner:self];
@@ -730,10 +730,7 @@
     
     NSMutableString* rowType = [NSMutableString string];
     rowDetails = [self dataForRow: rowNumber];
-    
-    [tfBigLog becomeFirstResponder];
-    [tfBigLog setStringValue:[rowDetails objectForKey:KEY_TEXT]];
-    
+    [tfBigLog setString:[rowDetails objectForKey:KEY_TEXT]];
     
     [NSApp beginSheet:sheetBigLog modalForWindow:self.window modalDelegate:self didEndSelector:@selector(didEndSheet:returnCode:contextInfo:) contextInfo:nil];
 

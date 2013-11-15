@@ -726,12 +726,14 @@
         [NSBundle loadNibNamed:@"BigLogSheet" owner:self];
     }
     
+    NSDictionary* rowDetails = nil;
     
+    NSMutableString* rowType = [NSMutableString string];
+    rowDetails = [self dataForRow: rowNumber];
     
     [tfBigLog becomeFirstResponder];
-    [tfBigLog setStringValue:[[logcat objectAtIndex:rowNumber] objectForKey:@"text"]];
+    [tfBigLog setStringValue:[rowDetails objectForKey:KEY_TEXT]];
     
-    [[sheetBigLog logEntry] setStringValue:@"asdasd"];
     
     [NSApp beginSheet:sheetBigLog modalForWindow:self.window modalDelegate:self didEndSelector:@selector(didEndSheet:returnCode:contextInfo:) contextInfo:nil];
 
